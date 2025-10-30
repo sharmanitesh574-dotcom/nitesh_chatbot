@@ -1,0 +1,22 @@
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[runner]
+magicEnabled = false
+fastReruns = true
+
+[client]
+showErrorDetails = true
+
+[logger]
+level = "info"
+messageFormat = "%(asctime)s %(message)s"
+
+[theme]
+base = "light"
+
+# Suggest a default encoding for Streamlit logging/runtime
+[encoding]
+default = "utf-8"
