@@ -22,12 +22,12 @@ if not api_key:
 # App Configuration
 # ==============================
 st.set_page_config(
-    page_title="Nitesh’s AI Chatbot",
+    page_title="Nitesh's AI Chatbot",
     page_icon="🤖",
     layout="centered"
 )
 
-st.title("🤖 Nitesh’s Multi-Model Chatbot (OpenRouter)")
+st.title("🤖 Nitesh's Multi-Model Chatbot (OpenRouter)")
 
 # ==============================
 # Chat Persistence
