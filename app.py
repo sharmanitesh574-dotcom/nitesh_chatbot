@@ -1,39 +1,47 @@
+# ==========================================
+# Nitesh's Final Streamlit Chatbot (UTF-8 Safe)
+# ==========================================
 import os
-import sys
-import io
 import json
 import requests
 import streamlit as st
 from dotenv import load_dotenv
+import sys
 
 # ==========================================
-# 🔧 Force UTF-8 globally (fix for latin-1 error)
+# Force UTF-8 Encoding at Runtime
 # ==========================================
-sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8', errors='replace')
+os.environ["PYTHONIOENCODING"] = "utf-8"
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 # ==========================================
-# 🔐 Load Environment Variables
+# Load Environment Variables
 # ==========================================
 load_dotenv()
 
 api_key = os.getenv("OPENROUTER_API_KEY")
 api_url = os.getenv("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions")
 referrer = os.getenv("OPENROUTER_REFERRER", "https://share.streamlit.io")
-title = os.getenv("OPENROUTER_TITLE", "Nitesh’s AI Chatbot")
+title = os.getenv("OPENROUTER_TITLE", "Nitesh's AI Chatbot")
 
 if not api_key:
     st.error("❌ OPENROUTER_API_KEY not found in .env file.")
     st.stop()
 
 # ==========================================
-# ⚙️ Streamlit App Configuration
+# Streamlit App Configuration
 # ==========================================
-st.set_page_config(page_title="Nitesh's AI Chatbot", page_icon="🤖", layout="centered")
-st.title("🤖 Nitesh’s Multi-Model Chatbot (OpenRouter)")
+st.set_page_config(
+    page_title="Nitesh's AI Chatbot",
+    page_icon="🤖",
+    layout="centered"
+)
+
+st.title("🤖 Nitesh's Multi-Model Chatbot (OpenRouter)")
 
 # ==========================================
-# 💾 Chat Persistence
+# Chat Persistence
 # ==========================================
 CHAT_FILE = "chat_history.json"
 
@@ -51,7 +59,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = load_chat()
 
 # ==========================================
-# 🧠 Model Selection
+# Model Selection
 # ==========================================
 model_map = {
     "GPT-4o (OpenAI)": "openai/gpt-4o",
@@ -60,31 +68,33 @@ model_map = {
     "Mistral Large (Mistral)": "mistralai/mistral-large",
 }
 
-selected_model_name = st.selectbox("🧩 Choose a Model", list(model_map.keys()))
+selected_model_name = st.selectbox("🧠 Choose a Model", list(model_map.keys()))
 selected_model = model_map[selected_model_name]
 
 # ==========================================
-# 💬 Display Chat History
+# Display Chat History
 # ==========================================
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
         st.markdown(f"**🧑‍💻 You:** {msg['content']}")
-    elif msg["role"] == "assistant":
+    else:
         st.markdown(f"**🤖 Bot:** {msg['content']}")
 
 # ==========================================
-# ⌨️ User Input + API Call
+# User Input and API Call
 # ==========================================
 user_input = st.chat_input("Type your message...")
 
 if user_input:
+    # Ensure clean UTF-8 user text
+    user_input = user_input.encode("utf-8", "ignore").decode("utf-8")
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.markdown(f"**🧑‍💻 You:** {user_input}")
 
     headers = {
         "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "Referer": referrer,   # ✅ Correct header name
+        "Content-Type": "application/json; charset=utf-8",
+        "HTTP-Referer": referrer,
         "X-Title": title,
     }
 
@@ -95,23 +105,23 @@ if user_input:
 
     try:
         response = requests.post(api_url, headers=headers, json=payload)
+        response.encoding = "utf-8"
         data = response.json()
 
-        if response.status_code == 401:
-            st.error("🔑 Unauthorized: Check your API key or Referer domain on OpenRouter.")
-        elif "choices" in data:
+        if "choices" in data:
             bot_reply = data["choices"][0]["message"]["content"]
+            bot_reply = bot_reply.encode("utf-8", "ignore").decode("utf-8")
             st.session_state.messages.append({"role": "assistant", "content": bot_reply})
             st.markdown(f"**🤖 Bot:** {bot_reply}")
             save_chat(st.session_state.messages)
         else:
-            st.error(f"⚠️ Unexpected response: {json.dumps(data, indent=2)}")
+            st.error(f"⚠️ Unexpected response: {data}")
 
     except Exception as e:
         st.error(f"❌ Error: {e}")
 
 # ==========================================
-# 🧹 Clear Chat Option
+# Clear Chat Option
 # ==========================================
 if st.button("🗑️ Clear Chat History"):
     st.session_state.messages = [{"role": "system", "content": "You are a friendly and helpful assistant."}]
