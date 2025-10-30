@@ -5,10 +5,14 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # ==============================
-# Load API Key
+# Load Environment Variables
 # ==============================
 load_dotenv()
+
 api_key = os.getenv("OPENROUTER_API_KEY")
+api_url = os.getenv("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions")
+referrer = os.getenv("OPENROUTER_REFERRER", "https://share.streamlit.io")
+title = os.getenv("OPENROUTER_TITLE", "Nitesh’s AI Chatbot")
 
 if not api_key:
     st.error("❌ OPENROUTER_API_KEY not found in .env file.")
@@ -47,7 +51,7 @@ if "messages" not in st.session_state:
 # Model Selection
 # ==============================
 model_map = {
-    "GPT-4o (OpenAI)": "gpt-4o",
+    "GPT-4o (OpenAI)": "openai/gpt-4o",
     "Claude 3.5 Sonnet (Anthropic)": "anthropic/claude-3.5-sonnet",
     "Gemini 1.5 Pro (Google)": "google/gemini-1.5-pro",
     "Mistral Large (Mistral)": "mistralai/mistral-large",
@@ -66,7 +70,7 @@ for msg in st.session_state.messages[1:]:
         st.markdown(f"**🤖 Bot:** {msg['content']}")
 
 # ==============================
-# User Input and API Request
+# User Input and API Call
 # ==============================
 user_input = st.chat_input("Type your message...")
 
@@ -74,12 +78,11 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.markdown(f"**🧑‍💻 You:** {user_input}")
 
-    url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://localhost:8501",
-        "X-Title": "Nitesh Chatbot",
+        "HTTP-Referer": referrer,  # Must be valid for OpenRouter
+        "X-Title": title,
     }
 
     payload = {
@@ -88,7 +91,7 @@ if user_input:
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload)
+        response = requests.post(api_url, headers=headers, json=payload)
         data = response.json()
 
         if "choices" in data:
